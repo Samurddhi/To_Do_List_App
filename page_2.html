@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task-It</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #ffecd2, #79d2f8);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            background: linear-gradient(to right, #3f9abb, #625cdb);
+            width: 90%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        #task-input {
+            width: 70%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #add-task-btn {
+            background: #fcb69f;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #add-task-btn:hover {
+            background: #ff7e5f;
+        }
+
+        #task-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-content {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .task-calendar {
+            background: #fcb69f;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-right: 15px;
+            text-align: center;
+        }
+
+        .task-date {
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        .task-text {
+            flex: 1;
+            font-size: 1rem;
+            color: #333;
+            font-weight: bolder;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .edit-btn,
+        .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .check-task {
+            cursor: pointer;
+            width: 17px;
+        }
+
+        .completed .task-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Task-It</h1>
+            <div class="input-section">
+                <input type="text" id="task-input" placeholder="Add a new task...">
+                <button id="add-task-btn">Add</button>
+            </div>
+        </header>
+        <main>
+            <ul id="task-list"></ul>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskInput = document.getElementById('task-input');
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const taskList = document.getElementById('task-list');
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+            const saveTasks = () => localStorage.setItem('tasks', JSON.stringify(tasks));
+
+            const renderTasks = () => {
+                taskList.innerHTML = tasks
+                    .map((task, index) => `
+                        <li class="task-item ${task.completed ? 'completed' : ''}" data-index="${index}">
+                            <div class="task-content">
+                                <div class="task-calendar">
+                                    <span class="task-date">${task.date}</span>
+                                </div>
+                                <span class="task-text">${task.text}</span>
+                                <div class="task-actions">
+                                    <button class="edit-btn">✏️</button>
+                                    <button class="delete-btn">🗑️</button>
+                                    <input type="checkbox" class="check-task" ${task.completed ? 'checked' : ''}>
+                                </div>
+                            </div>
+                        </li>
+                    `)
+                    .join('');
+            };
+
+            const handleTaskActions = (e) => {
+                const target = e.target;
+                const li = target.closest('.task-item');
+                const index = li.getAttribute('data-index');
+
+                if (target.classList.contains('edit-btn')) {
+                    const newText = prompt('Edit your task:', tasks[index].text);
+                    if (newText) {
+                        tasks[index].text = newText;
+                        saveTasks();
+                        renderTasks();
+                    }
+                }
+
+                if (target.classList.contains('delete-btn')) {
+                    tasks.splice(index, 1);
+                    saveTasks();
+                    renderTasks();
+                }
+
+                if (target.classList.contains('check-task')) {
+                    tasks[index].completed = target.checked;
+                    saveTasks();
+                    renderTasks();
+                }
+            };
+
+            const addTask = () => {
+                const taskText = taskInput.value.trim();
+                if (taskText) {
+                    tasks.push({ text: taskText, date: new Date().toLocaleDateString(), completed: false });
+                    saveTasks();
+                    renderTasks();
+                    taskInput.value = '';
+                }
+            };
+
+            addTaskBtn.addEventListener('click', addTask);
+            taskInput.addEventListener('keypress', (e) => e.key === 'Enter' && addTask());
+            taskList.addEventListener('click', handleTaskActions);
+
+            renderTasks();
+        });
+    </script>
+</body>
+</html>
